@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Re:School - 저출산 및 폐교 활용 플랫폼</title>
+
+<!-- Leaflet 지도 CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+<style>
+:root {
+    --primary: #2B6CB0;
+    --primary-light: #4299E1;
+    --bg-cream: #FAF5EF;
+    --text: #2D3748;
+    --sub: #718096;
+    --line: #E2E8F0;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: Arial, "Malgun Gothic", sans-serif;
+    background: var(--bg-cream);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+/* 상단 메뉴 */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 8%;
+    background: white;
+    box-shadow: 0 2px 10px #0000000d;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary);
+    text-decoration: none;
+}
+
+nav {
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+}
+
+nav a {
+    color: var(--text);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+nav a:hover {
+    color: var(--primary);
+}
+
+/* 메인 화면 */
+.hero {
+    text-align: center;
+    padding: 80px 20px;
+    background: linear-gradient(135deg, #EBF8FF, #FAF5EF);
+}
+
+.hero h1 {
+    font-size: clamp(2rem, 5vw, 3rem);
+    color: var(--primary);
+    margin-bottom: 15px;
+}
+
+.hero p {
+    color: var(--sub);
+    margin-bottom: 25px;
+}
+
+.btn {
+    display: inline-block;
+    background: var(--primary);
+    color: white;
+    padding: 12px 22px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.btn:hover {
+    background: #2C5282;
+}
+
+/* 공통 영역 */
+.container {
+    max-width: 1200px;
+    margin: 65px auto;
+    padding: 0 22px;
+}
+
+.title {
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.desc {
+    text-align: center;
+    color: var(--sub);
+    margin-bottom: 28px;
+}
+
+/* 카드 */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+}
+
+.card {
+    background: white;
+    border-radius: 13px;
+    padding: 23px;
+    box-shadow: 0 4px 15px #00000008;
+}
+
+.stat {
+    font-size: 2.3rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin: 6px 0;
+}
+
+.note {
+    margin-top: 17px;
+    padding: 13px 16px;
+    border-radius: 10px;
+    background: #FFF8E7;
+    border: 1px solid #F6E3B4;
+    color: #795B19;
+    font-size: .9rem;
+}
+
+/* 지역별 통계 */
+.region-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+    gap: 10px;
+}
+
+.region-btn {
+    border: 1px solid var(--line);
+    background: white;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: left;
+    cursor: pointer;
+    font: inherit;
+}
+
+.region-btn:hover,
+.region-btn.active {
+    border-color: var(--primary);
+    background: #EBF8FF;
+}
+
+.region-btn strong {
+    display: block;
+    color: var(--primary);
+    font-size: 1.15rem;
+}
+
+.region-btn span {
+    font-size: .86rem;
+    color: var(--sub);
+}
+
+/* CSV 업로드 */
+.upload-area {
+    background: white;
+    border: 2px dashed #90CDF4;
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.upload-area input {
+    margin-top: 12px;
+    max-width: 100%;
+}
+
+#uploadStatus {
+    margin-top: 10px;
+    color: var(--sub);
+    font-size: .9rem;
+}
+
+/* 검색 및 필터 */
+.controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.controls input,
+.controls select {
+    min-height: 44px;
+    padding: 9px 12px;
+    border: 1px solid #CBD5E0;
+    border-radius: 8px;
+    background: white;
+    font: inherit;
+}
+
+.controls input {
+    flex: 1 1 260px;
+}
+
+.controls select {
+    flex: 1 1 170px;
+}
+
+/* 지도 */
+.map-section {
+    background: white;
+    padding: 20px;
+    border-radius: 13px;
+    margin: 8px 0 22px;
+    box-shadow: 0 4px 15px #00000008;
+}
+
+.map-section h3 {
+    color: var(--primary);
+    margin-bottom: 7px;
+}
+
+.map-info {
+    color: var(--sub);
+    margin-bottom: 14px;
+    font-size: .9rem;
+}
+
+#schoolMap {
+    width: 100%;
+    height: 480px;
+    border-radius: 10px;
+    z-index: 1;
+}
+
+.map-status {
+    margin-top: 10px;
+    color: var(--sub);
+    font-size: .88rem;
+}
+
+/* 표 */
+.results {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    color: var(--sub);
+    font-size: .9rem;
+    margin-bottom: 10px;
+}
+
+.table-wrap {
+    overflow-x: auto;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px #00000008;
+}
+
+table {
+    width: 100%;
+    min-width: 850px;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    padding: 13px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+    font-size: .9rem;
+}
+
+th {
+    background: #F1F6FB;
+    color: #2C5282;
+    white-space: nowrap;
+}
+
+tbody tr:hover {
+    background: #F8FBFE;
+}
+
+/* 지도 보기 버튼 */
+.maplink {
+    border: none;
+    background: none;
+    color: var(--primary);
+    font-weight: bold;
+    font-size: .9rem;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: inherit;
+}
+
+.maplink:hover {
+    text-decoration: underline;
+}
+
+/* 페이지 이동 */
+.pager {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.pager button {
+    border: 0;
+    border-radius: 8px;
+    background: var(--primary);
+    color: white;
+    padding: 9px 15px;
+    font: inherit;
+    cursor: pointer;
+}
+
+.pager button:disabled {
+    background: #A0AEC0;
+    cursor: not-allowed;
+}
+
+/* 하단 */
+footer {
+    margin-top: 75px;
+    background: #2D3748;
+    color: white;
+    text-align: center;
+    padding: 36px 18px;
+}
+
+footer p {
+    color: #CBD5E0;
+    font-size: .88rem;
+    margin: 4px;
+}
+
+.leaflet-popup-content {
+    line-height: 1.65;
+}
+
+/* 모바일 */
+@media(max-width:700px) {
+    #schoolMap {
+        height: 360px;
+    }
+
+    header {
+        position: static;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    nav {
+        justify-content: center;
+        gap: 10px 15px;
+    }
+
+    .hero {
+        padding: 60px 16px;
+    }
+
+    .container {
+        margin: 45px auto;
+        padding: 0 15px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <a class="logo" href="#">Re:School</a>
+
+    <nav>
+        <a href="#stats">폐교 현황</a>
+        <a href="#regions">지역별 통계</a>
+        <a href="#school-data">폐교 검색</a>
+        <a href="#schoolMapSection">폐교 지도</a>
+        <a href="#ideas">활용 아이디어</a>
+    </nav>
+</header>
+
+<main>
+
+<!-- 메인 화면 -->
+<section class="hero">
+    <h1>아이들의 웃음이 사라진 곳에,<br>새로운 희망을 채웁니다</h1>
+
+    <p>
+        저출산과 학령인구 감소로 문을 닫은 학교를<br>
+        지역사회의 새로운 자산으로 활용합니다.
+    </p>
+
+    <a class="btn" href="#school-data">전국 폐교 데이터 탐색하기</a>
+</section>
+
+
+<!-- 전국 폐교 현황 -->
+<section class="container" id="stats">
+
+    <h2 class="title">📊 전국 폐교 현황</h2>
+
+    <p class="desc">
+        학교알리미 폐교정보 데이터를 기반으로 한 통계입니다.
+    </p>
+
+    <div class="grid">
+
+        <article class="card">
+            <h3>전국 폐교 정보</h3>
+            <div class="stat" id="totalStat">0</div>
+            <small>전체 데이터</small>
+        </article>
+
+        <article class="card">
+            <h3>지역 수</h3>
+            <div class="stat" id="regionStat">0</div>
+            <small>시·도 기준</small>
+        </article>
+
+        <article class="card">
+            <h3>초등학교 폐교</h3>
+            <div class="stat" id="elementaryStat">0</div>
+            <small>학교급명이 초인 데이터</small>
+        </article>
+
+    </div>
+
+    <div class="note">
+        데이터 기준일: 2025년 9월 30일.
+        실제 폐교 활용 여부는 별도의 자료가 필요합니다.
+    </div>
+
+</section>
+
+
+<!-- 지역별 통계 -->
+<section class="container" id="regions">
+
+    <h2 class="title">📍 지역별 폐교 분포</h2>
+
+    <p class="desc">
+        지역을 선택하면 해당 지역의 폐교 목록을 확인할 수 있습니다.
+    </p>
+
+    <div class="region-grid" id="regionGrid"></div>
+
+</section>
+
+
+<!-- 폐교 상세 정보 -->
+<section class="container" id="school-data">
+
+    <h2 class="title">🏫 전국 폐교 상세 정보</h2>
+
+    <p class="desc">
+        CSV 파일을 불러오면 전국 폐교 정보를 검색할 수 있습니다.
+    </p>
+
+    <!-- CSV 업로드 -->
+    <div class="upload-area">
+
+        <strong>폐교정보 CSV 파일 불러오기</strong>
+
+        <p>
+            한국교육학술정보원 학교알리미 폐교정보 CSV 파일을 선택하세요.
+        </p>
+
+        <input type="file" id="csvFile" accept=".csv">
+
+        <p id="uploadStatus">
+            아직 CSV 파일을 불러오지 않았습니다.
+        </p>
+
+    </div>
+
+
+    <!-- 검색 및 필터 -->
+    <div class="controls">
+
+        <input
+            id="search"
+            type="search"
+            placeholder="학교명, 교육청 또는 주소 검색"
+        >
+
+        <select id="region">
+            <option value="">전체 지역</option>
+        </select>
+
+        <select id="level">
+            <option value="">전체 학교급</option>
+            <option value="초">초등학교</option>
+            <option value="중">중학교</option>
+            <option value="고">고등학교</option>
+            <option value="특수">특수학교</option>
+        </select>
+
+    </div>
+
+
+    <!-- 지도 -->
+    <div class="map-section" id="schoolMapSection">
+
+        <h3>🗺️ 전국 폐교 위치 지도</h3>
+
+        <p class="map-info">
+            폐교 목록에서 '지도 보기'를 누르면 해당 학교의 위치를 지도에 표시합니다.
+        </p>
+
+        <div id="schoolMap"></div>
+
+        <p id="mapStatus" class="map-status">
+            학교를 선택하면 지도에 위치가 표시됩니다.
+        </p>
+
+    </div>
+
+
+    <!-- 검색 결과 -->
+    <div class="results">
+
+        <span id="resultCount">
+            데이터를 불러와 주세요.
+        </span>
+
+        <span>한 페이지 20개</span>
+
+    </div>
+
+
+    <!-- 폐교 목록 -->
+    <div class="table-wrap">
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>지역</th>
+                    <th>교육청</th>
+                    <th>학교명</th>
+                    <th>학교급</th>
+                    <th>폐교일자</th>
+                    <th>주소</th>
+                    <th>지도</th>
+                </tr>
+            </thead>
+
+            <tbody id="rows">
+
+                <tr>
+                    <td colspan="7">
+                        CSV 파일을 먼저 불러와 주세요.
+                    </td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+
+    <!-- 페이지 이동 -->
+    <div class="pager">
+
+        <button id="prev">이전</button>
+
+        <span id="page">1 / 1</span>
+
+        <button id="next">다음</button>
+
+    </div>
+
+</section>
+
+
+<!-- 폐교 활용 아이디어 -->
+<section class="container" id="ideas">
+
+    <h2 class="title">💡 폐교 활용 아이디어</h2>
+
+    <p class="desc">
+        폐교를 지역사회의 새로운 공간으로 활용하는 방안입니다.
+    </p>
+
+    <div class="grid">
+
+        <article class="card">
+            <h3>🎨 문화예술 복합공간</h3>
+            <p>
+                교실을 전시실, 작가 작업실, 주민 체험 공방으로 전환합니다.
+            </p>
+        </article>
+
+        <article class="card">
+            <h3>🌱 스마트팜·농업 교육</h3>
+            <p>
+                청년 농업 교육, 작물 재배 체험, 지역 농산물 연구 공간으로 활용합니다.
+            </p>
+        </article>
+
+        <article class="card">
+            <h3>🏕️ 자연 체험 공간</h3>
+            <p>
+                주변 자연환경을 활용한 생태 체험장과 지역 교육 공간을 조성합니다.
+            </p>
+        </article>
+
+    </div>
+
+</section>
+
+</main>
+
+
+<!-- 하단 -->
+<footer>
+
+    <p>사회문제 해결 고등학교 팀 프로젝트 | Re:School</p>
+
+    <p>데이터 출처: 한국교육학술정보원, 학교알리미 폐교정보</p>
+
+    <p>© 2026 Re:School Project</p>
+
+</footer>
+
+
+<!-- Leaflet 지도 라이브러리 -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+
+<script>
+
+// =====================================
+// 기본 변수
+// =====================================
+
+let schools = [];
+let filteredSchools = [];
+
+let currentPage = 1;
+const pageSize = 20;
+
+const $ = id => document.getElementById(id);
+
+
+// =====================================
+// 지도 설정
+// =====================================
+
+let schoolMap = null;
+let schoolMarker = null;
+
+const coordinateCache = new Map();
+
+let lastGeocodeRequestTime = 0;
+
+
+// 지역명을 정식 행정구역 이름으로 변환
+const regionFullNames = {
+
+    "강원": "강원특별자치도",
+    "경기": "경기도",
+    "경남": "경상남도",
+    "경북": "경상북도",
+    "전남": "전라남도",
+    "전북": "전북특별자치도",
+    "충남": "충청남도",
+    "충북": "충청북도",
+    "제주": "제주특별자치도",
+
+    "서울": "서울특별시",
+    "부산": "부산광역시",
+    "대구": "대구광역시",
+    "인천": "인천광역시",
+    "광주": "광주광역시",
+    "대전": "대전광역시",
+    "울산": "울산광역시",
+    "세종": "세종특별자치시"
+
+};
+
+
+// 지도 초기화
+function initializeMap() {
+
+    schoolMap = L.map("schoolMap").setView([36.5, 127.8], 7);
+
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+
+            maxZoom: 19
+        }
+    ).addTo(schoolMap);
+
+}
+
+
+// =====================================
+// 주소 검색 요청 간격 유지
+// =====================================
+
+async function waitForGeocodeInterval() {
+
+    const now = Date.now();
+
+    const waitTime = Math.max(
+        0,
+        1100 - (now - lastGeocodeRequestTime)
+    );
+
+    if (waitTime > 0) {
+
+        await new Promise(resolve => {
+            setTimeout(resolve, waitTime);
+        });
+
+    }
+
+}
+
+
+// =====================================
+// OpenStreetMap 주소 검색
+// =====================================
+
+async function requestGeocode(query) {
+
+    await waitForGeocodeInterval();
+
+    const params = new URLSearchParams({
+
+        format: "jsonv2",
+        limit: "1",
+        countrycodes: "kr",
+        addressdetails: "1",
+        "accept-language": "ko",
+        q: query
+
+    });
+
+    const url =
+        "https://nominatim.openstreetmap.org/search?" +
+        params.toString();
+
+    lastGeocodeRequestTime = Date.now();
+
+    const response = await fetch(url);
+
+    if (response.status === 429) {
+
+        throw new Error(
+            "위치 검색 요청이 많습니다. 잠시 후 다시 시도해 주세요."
+        );
+
+    }
+
+    if (!response.ok) {
+
+        throw new Error(
+            "위치 검색 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요."
+        );
+
+    }
+
+    return await response.json();
+
+}
+
+
+// =====================================
+// 주소를 여러 방식으로 검색
+// =====================================
+
+async function findSchoolLocation(school) {
+
+    const address = String(school.address || "")
+        .trim()
+        .replace(/\s+/g, " ");
+
+    if (!address) {
+
+        throw new Error("학교 주소가 없습니다.");
+
+    }
+
+    if (coordinateCache.has(address)) {
+
+        return coordinateCache.get(address);
+
+    }
+
+    const province =
+        regionFullNames[school.region] || school.region;
+
+    // 1. 정식 행정구역 이름 + 주소
+    const exactAddress =
+        `${province} ${address} 대한민국`;
+
+    // 2. 정식 행정구역 이름 + 교육청 + 학교명
+    const schoolName =
+        `${province} ${school.office || ""} ${school.school} 대한민국`;
+
+    // 3. 주소에서 마지막 번지 번호를 제외한 주변 지역 검색
+    const simplifiedAddress = address
+        .replace(/\s+\d+(?:-\d+)*$/, "")
+        .trim();
+
+    const areaAddress =
+        `${province} ${simplifiedAddress} 대한민국`;
+
+    const queries = [
+
+        {
+            query: exactAddress,
+            precision: "address"
+        },
+
+        {
+            query: schoolName,
+            precision: "school"
+        },
+
+        {
+            query: areaAddress,
+            precision: "approximate"
+        }
+
+    ].filter((item, index, array) =>
+
+        array.findIndex(other =>
+            other.query === item.query
+        ) === index
+
+    );
+
+    let lastError = null;
+
+    for (const item of queries) {
+
+        try {
+
+            const data = await requestGeocode(item.query);
+
+            if (!data || data.length === 0) {
+                continue;
+            }
+
+            const result = data[0];
+
+            const location = {
+
+                lat: Number(result.lat),
+                lng: Number(result.lon),
+
+                displayName: result.display_name || "",
+
+                precision: item.precision
+
+            };
+
+            if (
+                !Number.isFinite(location.lat) ||
+                !Number.isFinite(location.lng)
+            ) {
+                continue;
+            }
+
+            coordinateCache.set(address, location);
+
+            return location;
+
+        } catch (error) {
+
+            lastError = error;
+
+            if (
+                error.message.includes("요청이 많습니다") ||
+                error.message.includes("서버에 연결")
+            ) {
+
+                throw error;
+
+            }
+
+        }
+
+    }
+
+    if (lastError) {
+        throw lastError;
+    }
+
+    throw new Error(
+        "주소와 학교명으로 위치를 찾지 못했습니다. 해당 폐교가 지도 데이터에 등록되어 있지 않을 수 있습니다."
+    );
+
+}
+
+
+// =====================================
+// HTML 안전 처리
+// =====================================
+
+function escapeHTML(value) {
+
+    return String(value || "").replace(/[&<>"']/g, char => ({
+
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+
+    })[char]);
+
+}
+
+
+// =====================================
+// 선택한 학교 지도에 표시
+// =====================================
+
+async function showSchoolOnMap(school) {
+
+    const status = $("mapStatus");
+
+    status.textContent =
+        school.school + "의 위치를 검색하고 있습니다.";
+
+    try {
+
+        const location =
+            await findSchoolLocation(school);
+
+        // 기존 마커 제거
+        if (schoolMarker) {
+
+            schoolMap.removeLayer(schoolMarker);
+
+        }
+
+        // 새 마커 생성
+        schoolMarker = L.marker([
+
+            location.lat,
+            location.lng
+
+        ]).addTo(schoolMap);
+
+
+        const precisionText = {
+
+            address: "주소 검색 결과",
+
+            school: "학교명 검색 결과",
+
+            approximate: "주변 지역 기준 근사 위치"
+
+        };
+
+        const accuracy =
+            precisionText[location.precision];
+
+
+        // 마커 클릭 시 표시되는 정보
+        const popupContent = `
+
+            <strong>${escapeHTML(school.school)}</strong>
+
+            <br>
+
+            지역: ${escapeHTML(school.region)}
+
+            <br>
+
+            학교급: ${escapeHTML(school.level)}
+
+            <br>
+
+            폐교일자: ${escapeHTML(school.closedDate)}
+
+            <br>
+
+            주소: ${escapeHTML(school.address)}
+
+            <br><br>
+
+            <strong>${accuracy}</strong>
+
+            <br>
+
+            <small>
+                지도 데이터에 따라 실제 학교 위치와
+                차이가 있을 수 있습니다.
+            </small>
+
+        `;
+
+
+        schoolMarker
+            .bindPopup(popupContent)
+            .openPopup();
+
+
+        // 지도 이동
+        schoolMap.setView(
+
+            [location.lat, location.lng],
+
+            location.precision === "approximate" ? 12 : 16
+
+        );
+
+
+        status.textContent =
+            school.school +
+            " 위치 표시 완료! (" +
+            accuracy +
+            ")";
+
+
+        // 지도 위치로 화면 이동
+        $("schoolMap").scrollIntoView({
+
+            behavior: "smooth",
+            block: "center"
+
+        });
+
+
+        setTimeout(() => {
+
+            schoolMap.invalidateSize();
+
+        }, 300);
+
+
+    } catch (error) {
+
+        status.textContent =
+            "위치 검색 실패: " + error.message;
+
+    }
+
+}
+
+
+// =====================================
+// CSV 파싱
+// =====================================
+
+function parseCSV(text) {
+
+    const rows = [];
+
+    let row = [];
+    let cell = "";
+    let quoted = false;
+
+    for (let i = 0; i < text.length; i++) {
+
+        const char = text[i];
+        const next = text[i + 1];
+
+        if (char === '"' && quoted && next === '"') {
+
+            cell += '"';
+            i++;
+
+        } else if (char === '"') {
+
+            quoted = !quoted;
+
+        } else if (char === ',' && !quoted) {
+
+            row.push(cell.trim());
+            cell = "";
+
+        } else if (
+            (char === '\n' || char === '\r') &&
+            !quoted
+        ) {
+
+            if (char === '\r' && next === '\n') {
+                i++;
+            }
+
+            row.push(cell.trim());
+
+            if (row.some(value => value !== "")) {
+                rows.push(row);
+            }
+
+            row = [];
+            cell = "";
+
+        } else {
+
+            cell += char;
+
+        }
+
+    }
+
+    row.push(cell.trim());
+
+    if (row.some(value => value !== "")) {
+        rows.push(row);
+    }
+
+    return rows;
+
+}
+
+
+// =====================================
+// CSV 헤더 정리
+// =====================================
+
+function normalizeHeader(value) {
+
+    return String(value || "")
+        .replace(/^\uFEFF/, "")
+        .trim();
+
+}
+
+
+// =====================================
+// CSV 파일 불러오기
+// =====================================
+
+function loadCSV(file) {
+
+    const reader = new FileReader();
+
+    reader.onload = function(event) {
+
+        try {
+
+            const text = event.target.result;
+
+            const parsed = parseCSV(text);
+
+            if (parsed.length < 2) {
+
+                throw new Error(
+                    "CSV 데이터가 비어 있습니다."
+                );
+
+            }
+
+            const headers = parsed[0].map(normalizeHeader);
+
+
+            const findColumn = candidates =>
+
+                headers.findIndex(header =>
+                    candidates.includes(header)
+                );
+
+
+            const columns = {
+
+                region: findColumn([
+                    "지역",
+                    "시도",
+                    "시도명"
+                ]),
+
+                office: findColumn([
+                    "교육청",
+                    "교육지원청"
+                ]),
+
+                school: findColumn([
+                    "학교명"
+                ]),
+
+                level: findColumn([
+                    "학교급명",
+                    "학교급"
+                ]),
+
+                closedDate: findColumn([
+                    "폐교일자",
+                    "폐교일"
+                ]),
+
+                address: findColumn([
+                    "주소",
+                    "소재지"
+                ])
+
+            };
+
+
+            if (
+                columns.school === -1 ||
+                columns.region === -1
+            ) {
+
+                throw new Error(
+                    "CSV에서 지역 또는 학교명 열을 찾을 수 없습니다."
+                );
+
+            }
+
+
+            // 학교 정보 저장
+            schools = parsed.slice(1).map(row => ({
+
+                region:
+                    row[columns.region] || "",
+
+                office:
+                    columns.office >= 0
+                        ? row[columns.office] || ""
+                        : "",
+
+                school:
+                    row[columns.school] || "",
+
+                level:
+                    columns.level >= 0
+                        ? row[columns.level] || ""
+                        : "",
+
+                closedDate:
+                    columns.closedDate >= 0
+                        ? row[columns.closedDate] || ""
+                        : "",
+
+                address:
+                    columns.address >= 0
+                        ? row[columns.address] || ""
+                        : ""
+
+            })).filter(school => school.school);
+
+
+            currentPage = 1;
+
+            // 새 CSV를 불러오면 검색 캐시 초기화
+            coordinateCache.clear();
+
+            updateStatistics();
+
+            createRegionButtons();
+
+            createRegionOptions();
+
+            renderTable();
+
+
+            $("uploadStatus").textContent =
+                `불러오기 완료! 총 ${schools.length.toLocaleString()}개의 폐교 정보가 등록되었습니다.`;
+
+        } catch (error) {
+
+            $("uploadStatus").textContent =
+                "파일을 읽지 못했습니다: " + error.message;
+
+        }
+
+    };
+
+
+    reader.onerror = () => {
+
+        $("uploadStatus").textContent =
+            "파일을 읽는 중 오류가 발생했습니다.";
+
+    };
+
+
+    // 한글 CSV 파일을 위해 EUC-KR 인코딩 사용
+    reader.readAsText(file, "EUC-KR");
+
+}
+
+
+// =====================================
+// 전국 폐교 통계
+// =====================================
+
+function updateStatistics() {
+
+    const regions = [
+
+        ...new Set(
+            schools
+                .map(s => s.region)
+                .filter(Boolean)
+        )
+
+    ];
+
+    const elementary = schools.filter(
+        s => s.level === "초"
+    ).length;
+
+
+    $("totalStat").textContent =
+        schools.length.toLocaleString();
+
+    $("regionStat").textContent =
+        regions.length;
+
+    $("elementaryStat").textContent =
+        elementary.toLocaleString();
+
+}
+
+
+// =====================================
+// 지역별 통계 버튼
+// =====================================
+
+function createRegionButtons() {
+
+    const counts = {};
+
+    schools.forEach(school => {
+
+        if (school.region) {
+
+            counts[school.region] =
+                (counts[school.region] || 0) + 1;
+
+        }
+
+    });
+
+
+    const grid = $("regionGrid");
+
+    grid.innerHTML = "";
+
+
+    Object.entries(counts)
+
+        .sort((a, b) => b[1] - a[1])
+
+        .forEach(([region, count]) => {
+
+            const button =
+                document.createElement("button");
+
+            button.className = "region-btn";
+
+            button.innerHTML = `
+
+                <strong>${count.toLocaleString()}개</strong>
+
+                <span>${escapeHTML(region)}</span>
+
+            `;
+
+
+            button.addEventListener("click", () => {
+
+                $("region").value = region;
+
+                currentPage = 1;
+
+                renderTable();
+
+
+                document.querySelectorAll(".region-btn")
+
+                    .forEach(btn => {
+
+                        btn.classList.remove("active");
+
+                    });
+
+
+                button.classList.add("active");
+
+
+                $("school-data").scrollIntoView({
+
+                    behavior: "smooth"
+
+                });
+
+            });
+
+
+            grid.appendChild(button);
+
+        });
+
+}
+
+
+// =====================================
+// 지역 선택 옵션
+// =====================================
+
+function createRegionOptions() {
+
+    const select = $("region");
+
+    select.innerHTML =
+        '<option value="">전체 지역</option>';
+
+
+    const regions = [
+
+        ...new Set(
+            schools
+                .map(s => s.region)
+                .filter(Boolean)
+        )
+
+    ].sort();
+
+
+    regions.forEach(region => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = region;
+
+        option.textContent = region;
+
+        select.appendChild(option);
+
+    });
+
+}
+
+
+// =====================================
+// 폐교 목록 출력
+// =====================================
+
+function renderTable() {
+
+    const keyword =
+        $("search").value.trim().toLowerCase();
+
+    const region =
+        $("region").value;
+
+    const level =
+        $("level").value;
+
+
+    // 검색 및 필터 적용
+    filteredSchools = schools.filter(school => {
+
+        const matchesKeyword = [
+
+            school.school,
+            school.office,
+            school.address
+
+        ].join(" ").toLowerCase().includes(keyword);
+
+
+        return matchesKeyword &&
+
+            (!region || school.region === region) &&
+
+            (!level || school.level === level);
+
+    });
+
+
+    const totalPages = Math.max(
+
+        1,
+
+        Math.ceil(filteredSchools.length / pageSize)
+
+    );
+
+
+    if (currentPage > totalPages) {
+
+        currentPage = totalPages;
+
+    }
+
+
+    const start =
+        (currentPage - 1) * pageSize;
+
+    const pageData =
+        filteredSchools.slice(
+            start,
+            start + pageSize
+        );
+
+
+    const tbody = $("rows");
+
+    tbody.innerHTML = "";
+
+
+    if (pageData.length === 0) {
+
+        const tr = document.createElement("tr");
+
+        const td = document.createElement("td");
+
+        td.colSpan = 7;
+
+        td.textContent = "검색 결과가 없습니다.";
+
+        tr.appendChild(td);
+
+        tbody.appendChild(tr);
+
+    } else {
+
+        pageData.forEach(school => {
+
+            const tr =
+                document.createElement("tr");
+
+
+            // 학교 기본 정보
+            [
+
+                school.region,
+                school.office,
+                school.school,
+                school.level,
+                school.closedDate,
+                school.address
+
+            ].forEach(value => {
+
+                const td =
+                    document.createElement("td");
+
+                td.textContent = value || "-";
+
+                tr.appendChild(td);
+
+            });
+
+
+            // 지도 보기 버튼
+            const mapTd =
+                document.createElement("td");
+
+            const mapButton =
+                document.createElement("button");
+
+            mapButton.className = "maplink";
+
+            mapButton.textContent = "지도 보기";
+
+            mapButton.type = "button";
+
+
+            mapButton.addEventListener("click", () => {
+
+                showSchoolOnMap(school);
+
+            });
+
+
+            mapTd.appendChild(mapButton);
+
+            tr.appendChild(mapTd);
+
+            tbody.appendChild(tr);
+
+        });
+
+    }
+
+
+    // 검색 결과 개수
+    $("resultCount").textContent =
+
+        `검색 결과 ${filteredSchools.length.toLocaleString()}개`;
+
+
+    // 페이지 표시
+    $("page").textContent =
+
+        `${currentPage} / ${totalPages}`;
+
+
+    $("prev").disabled =
+        currentPage <= 1;
+
+    $("next").disabled =
+        currentPage >= totalPages;
+
+}
+
+
+// =====================================
+// CSV 업로드 이벤트
+// =====================================
+
+$("csvFile").addEventListener("change", event => {
+
+    const file = event.target.files[0];
+
+    if (file) {
+
+        loadCSV(file);
+
+    }
+
+});
+
+
+// =====================================
+// 검색 이벤트
+// =====================================
+
+$("search").addEventListener("input", () => {
+
+    currentPage = 1;
+
+    renderTable();
+
+});
+
+
+// =====================================
+// 지역 필터 이벤트
+// =====================================
+
+$("region").addEventListener("change", () => {
+
+    currentPage = 1;
+
+    renderTable();
+
+});
+
+
+// =====================================
+// 학교급 필터 이벤트
+// =====================================
+
+$("level").addEventListener("change", () => {
+
+    currentPage = 1;
+
+    renderTable();
+
+});
+
+
+// =====================================
+// 이전 페이지
+// =====================================
+
+$("prev").addEventListener("click", () => {
+
+    if (currentPage > 1) {
+
+        currentPage--;
+
+        renderTable();
+
+    }
+
+});
+
+
+// =====================================
+// 다음 페이지
+// =====================================
+
+$("next").addEventListener("click", () => {
+
+    const totalPages = Math.ceil(
+
+        filteredSchools.length / pageSize
+
+    );
+
+    if (currentPage < totalPages) {
+
+        currentPage++;
+
+        renderTable();
+
+    }
+
+});
+
+
+// =====================================
+// 지도 초기화
+// =====================================
+
+initializeMap();
+
+</script>
+
+</body>
+</html>
